@@ -1,6 +1,6 @@
 # Name:			Makefile
 # Author:		Jeff Keyzer
-# Copyright:	2011 Jeff Keyzer, MightyOhm Engineering	
+# Copyright:	2011 Jeff Keyzer, MightyOhm Engineering
 #
 # This Makefile is derived from the template that comes with CrossPack for the Mac,
 # but with several improvements.
@@ -14,7 +14,7 @@
 # DEVICE		The AVR device you are compiling for.
 # CLOCK			Target AVR clock rate in Hz (eg. 8000000)
 # PROGRAMMER	Programmer hardware used to flash program to target device.
-# PORT			The peripheral port on the host PC that the programmer is connected to.	
+# PORT			The peripheral port on the host PC that the programmer is connected to.
 # LFUSE			Target device configuration fuses, low byte.
 # HFUSE			Targer device configuration fuses, high byte.
 # EFUSE			Target device configuration fuses (extended).
@@ -41,7 +41,7 @@ AVRDUDE = avrdude -c $(PROGRAMMER) -P $(PORT) -p $(DEVICE)
 COMPILE = avr-gcc -g -Wall -Os -DF_CPU=$(CLOCK) -mmcu=$(DEVICE)
 
 # Linker options
-LDFLAGS	= -Wl,-Map=$(PROGRAM).map -Wl,--cref 
+LDFLAGS	= -Wl,-Map=$(PROGRAM).map -Wl,--cref
 
 # Add size command so we can see how much space we are using on the target device.
 SIZE	= avr-size -C --mcu=$(DEVICE)
@@ -50,14 +50,14 @@ SIZE	= avr-size -C --mcu=$(DEVICE)
 all:	$(PROGRAM).hex
 	$(SIZE) $(PROGRAM).elf
 
-$(PROGRAM):	all	
-	
+$(PROGRAM):	all
+
 flash: all
 	$(AVRDUDE) -U flash:w:$(PROGRAM).hex:i
 
 fuse:
 	$(AVRDUDE) -U hfuse:w:$(HFUSE):m -U lfuse:w:$(LFUSE):m -U efuse:w:$(EFUSE):m
-	
+
 # Xcode uses the Makefile targets "", "clean" and "install"
 install: flash fuse
 
@@ -67,7 +67,7 @@ clean:
 # file targets:
 %.hex: %.elf
 	avr-objcopy -j .text -j .data -O ihex $< $@
-	
+
 %.elf: %.o
 	$(COMPILE) -o $@ $< $(LDFLAGS)
 
