@@ -1,26 +1,25 @@
-# Name:			Makefile
-# Author:		Jeff Keyzer
-# Copyright:	2011 Jeff Keyzer, MightyOhm Engineering
+####################################################################################################
 #
-# This Makefile is derived from the template that comes with CrossPack for the Mac,
-# but with several improvements.
-
-# Values you might need to change:
-# In particular, check that your programmer is configured correctly.
+# mightyohm.com Geiger Counter firmware Makefile
 #
-# PROGRAM		The name of the "main" program file, without any suffix.
-# OBJECTS		The object files created from your source files. This list is
-#                usually the same as the list of source files with suffix ".o".
-# DEVICE		The AVR device you are compiling for.
-# CLOCK			Target AVR clock rate in Hz (eg. 8000000)
-# PROGRAMMER	Programmer hardware used to flash program to target device.
-# PORT			The peripheral port on the host PC that the programmer is connected to.
-# LFUSE			Target device configuration fuses, low byte.
-# HFUSE			Targer device configuration fuses, high byte.
-# EFUSE			Target device configuration fuses (extended).
+# Copyright (c) 2011 Jeff Keyzer, MightyOhm Engineering, https://mightyohm.com/, jeff at mightyohm dot com
+# Copyright (c) 2019 Philippe Kehl, flipflip industries, https://oinkzwurgl.org/projaeggd/geiger, flipflip at oinkzwurgl dot org
+#
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later
+# version.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with
+# this program. If not, see <http://www.gnu.org/licenses/>.
+#
+####################################################################################################
 
 PROGRAM		= geiger
-OBJECTS		= geiger.o
 DEVICE		= attiny2313
 CLOCK		= 8000000
 PROGRAMMER	= usbtiny
@@ -35,48 +34,44 @@ HFUSE		= 0xDD
 # EFUSE: no fuses programmed
 EFUSE		= 0xFF
 
-# Tune the lines below only if you know what you are doing:
+####################################################################################################
 
 AVRDUDE = avrdude -c $(PROGRAMMER) -P $(PORT) -p $(DEVICE)
-COMPILE = avr-gcc -g -Wall -Os -DF_CPU=$(CLOCK) -mmcu=$(DEVICE)
-
-# Linker options
+COMPILE = avr-gcc -g -Wall -Wextra -std=gnu99 -Os -DF_CPU=$(CLOCK) -mmcu=$(DEVICE)
 LDFLAGS	= -Wl,-Map=$(PROGRAM).map -Wl,--cref
-
-# Add size command so we can see how much space we are using on the target device.
 SIZE	= avr-size -C --mcu=$(DEVICE)
 
-# symbolic targets:
-all:	$(PROGRAM).hex
+####################################################################################################
+
+.PHONY:	all
+all: $(PROGRAM).hex $(PROGRAM).lst
 	$(SIZE) $(PROGRAM).elf
 
-$(PROGRAM):	all
+.PHONY:	flash
+flash: $(PROGRAM).hex
+	$(AVRDUDE) -U flash:w:$<:i
 
-flash: all
-	$(AVRDUDE) -U flash:w:$(PROGRAM).hex:i
-
+.PHONY:	fuse
 fuse:
 	$(AVRDUDE) -U hfuse:w:$(HFUSE):m -U lfuse:w:$(LFUSE):m -U efuse:w:$(EFUSE):m
 
-# Xcode uses the Makefile targets "", "clean" and "install"
+.PHONY:	install
 install: flash fuse
 
+.PHONY:	clean
 clean:
-	rm -f $(PROGRAM).hex $(PROGRAM).elf $(OBJECTS) $(PROGRAM).lst $(PROGRAM).map
+	rm -f $(PROGRAM).hex $(PROGRAM).elf $(PROGRAM).lst $(PROGRAM).map
 
-# file targets:
+####################################################################################################
+
 %.hex: %.elf
 	avr-objcopy -j .text -j .data -O ihex $< $@
 
-%.elf: %.o
+%.elf: %.c Makefile
 	$(COMPILE) -o $@ $< $(LDFLAGS)
 
-%.o: %.c
-	$(COMPILE) -c $< -o $@
+%.lst: %.elf
+	avr-objdump -h -S $< > $@
 
-# Targets for code debugging and analysis:
-disasm:	$(PROGRAM).elf
-	avr-objdump -h -S $(PROGRAM).elf > $(PROGRAM).lst
+####################################################################################################
 
-# Tell make that these targets don't correspond to actual files
-.PHONY :	all $(PROGRAM) flash fuse install clean disasm
