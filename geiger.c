@@ -78,6 +78,7 @@
 #include <avr/interrupt.h>              // avr: interrupt things
 #include <avr/pgmspace.h>               // avr: program space utilities
 #include <avr/sleep.h>                  // avr: sleep mode utilities
+#include <avr/wdt.h>                    // avr: watchdog timer handling
 #include <util/delay.h>                 // avr: convenience functions for busy-wait delay loops
 #include <util/delay.h>                 // avr: convenience functions for busy-wait delay loops
 
@@ -356,6 +357,9 @@ static void sendreport(void)
 
 int main(void)
 {
+    // enable watchdog
+    wdt_enable(WDTO_2S);
+
     // configure the UART
 #   include <util/setbaud.h>            // calculate baud rate parameters based on F_CPU
     UBRRH = UBRRH_VALUE;
@@ -414,6 +418,8 @@ int main(void)
         sendreport();                   // send a log report over serial
         checkevent();                   // check again before going to sleep
 
+        // assert watchdog
+        wdt_reset();
     }
 
     // never reached
