@@ -143,7 +143,7 @@ volatile uint16_t beepcount;            // flash and beep duration counter
 /* ***** flashing and beeping ******************************************************************** */
 
 // count: half period [ms], e.g. count=160 period = 320us, freq= 3.125kHz
-// duration: duration of flash/beep in [10ms]
+// duration: duration of flash/beep TODO: make this [ms]
 static void flash_and_beep(const uint8_t count, const uint8_t duration)
 {
     PORTB |= _BV(PB4);	                // turn on the LED
