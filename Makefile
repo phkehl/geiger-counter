@@ -34,6 +34,9 @@ HFUSE		= 0xDD
 # EFUSE: no fuses programmed
 EFUSE		= 0xFF
 
+# source files
+SOURCES    := $(PROGRAM).c
+
 ####################################################################################################
 
 AVRDUDE = avrdude -c $(PROGRAMMER) -P $(PORT) -p $(DEVICE)
@@ -44,8 +47,25 @@ SIZE	= avr-size -C --mcu=$(DEVICE)
 ####################################################################################################
 
 .PHONY:	all
-all: $(PROGRAM).hex $(PROGRAM).lst
-	$(SIZE) $(PROGRAM).elf
+all: $(PROGRAM).hex $(PROGRAM).elf $(PROGRAM).lst $(PROGRAM).size
+
+####################################################################################################
+
+$(PROGRAM).hex: $(PROGRAM).elf
+
+$(PROGRAM).elf: $(SOURCES) Makefile
+	$(COMPILE) -o $@ $(SOURCES) $(LDFLAGS)
+
+$(PROGRAM).lst: $(PROGRAM).elf
+	avr-objdump -h -S $< > $@
+
+$(PROGRAM).hex: $(PROGRAM).elf
+	avr-objcopy -j .text -j .data -O ihex $< $@
+
+$(PROGRAM).size: $(PROGRAM).elf
+	$(SIZE) $(PROGRAM).elf | tee $@
+
+####################################################################################################
 
 .PHONY:	flash
 flash: $(PROGRAM).hex
@@ -61,17 +81,6 @@ install: flash fuse
 .PHONY:	clean
 clean:
 	rm -f $(PROGRAM).hex $(PROGRAM).elf $(PROGRAM).lst $(PROGRAM).map
-
-####################################################################################################
-
-%.hex: %.elf
-	avr-objcopy -j .text -j .data -O ihex $< $@
-
-%.elf: %.c Makefile
-	$(COMPILE) -o $@ $< $(LDFLAGS)
-
-%.lst: %.elf
-	avr-objdump -h -S $< > $@
 
 ####################################################################################################
 
